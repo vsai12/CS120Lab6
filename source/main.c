@@ -47,24 +47,87 @@ void TimerSet(unsigned long M) {
 	timer_count = timer;
 }
 
+/*
+enum BL_States { BL_Start, BL_Off, BL_On } BL_State;
+void Tick_BlinkLED() {
+	switch(BL_State) {
+		case BL_Start:
+			BL_State = BL_Off;
+			break;
+		case BL_Off:
+			BL_State = BL_On;
+			break;
+		case BL_On:
+			BL_State = BL_Off;
+			break;
+		default:
+			BL_State = BL_Start;
+			break;
+
+	}
+
+	switch(BL_State) {
+		case BL_Off:
+			PORTB = 0x00;
+			break;
+		case BL_On:
+			PORTB = 0x01;
+			break;
+		default:
+			break;
+
+	}
+}*/
+
+enum TL_States { TL_Start, TL_T0, TL_T1, TL_T2 } TL_State;
+void Tick_ThreeLED() {
+	switch(TL_State) {
+                case TL_Start:
+                        TL_State = TL_T0;
+                        break;
+                case TL_T0:
+                        TL_State = TL_T1;
+                        break;
+                case TL_T1:
+                        TL_State = TL_T2;
+                        break;
+		case TL_T2:
+			TL_State = TL_T0;
+			break;
+                default:
+                        TL_State = TL_Start;
+                        break;
+
+        }
+
+        switch(TL_State) {
+                case TL_T0:
+                        PORTB = 0x01;
+                        break;
+                case TL_T1:
+                        PORTB = 0x02;
+                        break;
+		case TL_T2:
+			PORTB = 0x04;
+			break;
+                default:
+                        break;
+
+        }
+}
+
 int main(void) {
     /* Insert DDR and PORT initializations */
-	//DDRA = 0x00; PORTA = 0xFF;
+	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
 	TimerSet(1000);
 	TimerOn();
-	unsigned char tmpB = 0x00;
+	//BL_State = BL_Start;
+	TL_State = TL_Start;
     /* Insert your solution below */
     while (1) {
-	   if(tmpB == 0x00)
-		tmpB = 0x01;
-	   else if(tmpB == 0x01)
-		tmpB = 0x02;
-	   else if(tmpB == 0x02)
-		tmpB = 0x04;
-	   else if(tmpB == 0x04)
-		tmpB = 0x01;
-	    PORTB = tmpB;
+	    //Tick_BlinkLED();
+	    Tick_ThreeLED();
 	    while(!TimerFlag);
 	    TimerFlag = 0;
     }
