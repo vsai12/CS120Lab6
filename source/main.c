@@ -47,18 +47,25 @@ void TimerSet(unsigned long M) {
 	timer_count = timer;
 }
 
-/*
-enum BL_States { BL_Start, BL_Off, BL_On } BL_State;
-void Tick_BlinkLED() {
+unsigned char pause = 0;
+unsigned char reset = 0;
+enum BL_States { BL_Start, BL_Press, BL_Release } BL_State;
+void Button_Press() {
 	switch(BL_State) {
 		case BL_Start:
-			BL_State = BL_Off;
+			BL_State = BL_Release;
 			break;
-		case BL_Off:
-			BL_State = BL_On;
+		case BL_Release:
+			if(~PINA & 0x01)
+				BL_State = BL_Press;
+			else
+				BL_State = BL_Release;
 			break;
-		case BL_On:
-			BL_State = BL_Off;
+		case BL_Press:
+			if(~PINA)
+                                BL_State = BL_Release;
+                        else
+                                BL_State = BL_Press;
 			break;
 		default:
 			BL_State = BL_Start;
@@ -67,19 +74,20 @@ void Tick_BlinkLED() {
 	}
 
 	switch(BL_State) {
-		case BL_Off:
-			PORTB = 0x00;
+		case BL_Release:
+			pause = 0;
+			reset = 0;
 			break;
-		case BL_On:
-			PORTB = 0x01;
+		case BL_Press:
+			pause = 1;
 			break;
 		default:
 			break;
 
 	}
-}*/
+}
 
-enum TL_States { TL_Start, TL_T0, TL_T1, TL_T2 } TL_State;
+enum TL_States { TL_Start, TL_T0, TL_T1, TL_T2, TL_Pause, TL_Pause2 } TL_State;
 void Tick_ThreeLED() {
 	switch(TL_State) {
                 case TL_Start:
@@ -94,11 +102,28 @@ void Tick_ThreeLED() {
 		case TL_T2:
 			TL_State = TL_T0;
 			break;
+		case TL_Pause:
+			reset = 1;
+			if(!pause)
+				TL_State = TL_Pause2;
+			else
+				TL_State = TL_Pause;
+			break;
+
+		case TL_Pause2:
+			reset = 1;
+			if(pause)
+				TL_State = TL_Start;
+			else
+				TL_State = TL_Pause2;
+			break;
                 default:
                         TL_State = TL_Start;
                         break;
 
         }
+	if(pause && !reset)
+		TL_State = TL_Pause;
 
         switch(TL_State) {
                 case TL_T0:
@@ -120,13 +145,13 @@ int main(void) {
     /* Insert DDR and PORT initializations */
 	DDRA = 0x00; PORTA = 0xFF;
 	DDRB = 0xFF; PORTB = 0x00;
-	TimerSet(1000);
+	TimerSet(300);
 	TimerOn();
-	//BL_State = BL_Start;
+	BL_State = BL_Start;
 	TL_State = TL_Start;
     /* Insert your solution below */
     while (1) {
-	    //Tick_BlinkLED();
+	    Button_Press();
 	    Tick_ThreeLED();
 	    while(!TimerFlag);
 	    TimerFlag = 0;
